@@ -10,6 +10,6 @@ export const setUserRoleOnSignup = auth.user().onCreate(async (user) => {
     email: userEmail,
     role: "user",
     name: userEmail,
-    image: 'profile-images/KAPPA-1.webp',
+    image: "profile-images/kappa/KAPPA-1.webp",
   });
 });
