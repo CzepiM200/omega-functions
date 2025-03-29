@@ -1,9 +1,9 @@
 import * as admin from "firebase-admin"
 import { GlobalCollections, OrderCollectionIds } from "../consts/collection"
 
-export const addNewIdToOrderItem = async (orderItemName: OrderCollectionIds, newId: string) => {
+export const addNewIdToOrderItem = async (orderItemId: OrderCollectionIds, newId: string) => {
   const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
-  const orderItemReference = collectionReference.doc(orderItemName)
+  const orderItemReference = collectionReference.doc(orderItemId)
   const orderItem = await orderItemReference.get()
 
   const orderData = orderItem.data() as { order: Array<string> }
@@ -14,9 +14,9 @@ export const addNewIdToOrderItem = async (orderItemName: OrderCollectionIds, new
   return
 }
 
-export const deleteIdToOrderItem = async (orderItemName: OrderCollectionIds, deleteId: string) => {
+export const deleteIdToOrderItem = async (orderItemId: OrderCollectionIds, deleteId: string) => {
   const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
-  const orderItemReference = collectionReference.doc(orderItemName)
+  const orderItemReference = collectionReference.doc(orderItemId)
   const orderItem = await orderItemReference.get()
 
   const orderData = orderItem.data() as { order: Array<string> }
@@ -27,9 +27,9 @@ export const deleteIdToOrderItem = async (orderItemName: OrderCollectionIds, del
   return
 }
 
-export const moveIdUpInOrder = async (orderItemName: OrderCollectionIds, itemId: string) => {
+export const moveIdUpInOrder = async (orderItemId: OrderCollectionIds, itemId: string) => {
   const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
-  const orderItemReference = collectionReference.doc(orderItemName)
+  const orderItemReference = collectionReference.doc(orderItemId)
   const orderItem = await orderItemReference.get()
 
   const { order } = orderItem.data() as { order: Array<string> }
@@ -63,9 +63,9 @@ const moveIdUp = (id: string, order?: Array<string>) => {
   return order
 }
 
-export const moveIdDownInOrder = async (orderItemName: OrderCollectionIds, itemId: string) => {
+export const moveIdDownInOrder = async (orderItemId: OrderCollectionIds, itemId: string) => {
   const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
-  const orderItemReference = collectionReference.doc(orderItemName)
+  const orderItemReference = collectionReference.doc(orderItemId)
   const orderItem = await orderItemReference.get()
 
   const { order } = orderItem.data() as { order: Array<string> }

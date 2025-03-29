@@ -5,8 +5,34 @@ import { addNewIdToOrderItem, deleteIdToOrderItem } from "../utils/orderModifier
 import { GlobalCollections, OrderCollectionIds } from "../consts/collection"
 import { Roles } from "../consts/roles"
 import { setGlobalOptions } from "firebase-functions/v2"
+import { getSortedListByOrderList } from "../utils/orderList"
 
 setGlobalOptions({ region: "europe-central2" })
+
+export const getHomeSections = https.onRequest(async (req, res) => {
+  const {
+    isAuthenticated,
+    isAuthorized,
+  } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN, Roles.MODERATOR, Roles.USER])
+
+  if (!isAuthenticated || !isAuthorized) {
+    return
+  }
+
+  try {
+    const homeSectionsSnapshot = await admin.firestore().collection(GlobalCollections.HOME_SECTION).get()
+    const homeSectionsData = homeSectionsSnapshot.docs.map(doc => {
+      const { type, ...data } = doc.data()
+
+      return ({ id: doc.id, type, data })
+    })
+    const hoseSectionsSorted = await getSortedListByOrderList(OrderCollectionIds.HOME_PAGE, homeSectionsData)
+
+    res.status(200).send({ content: hoseSectionsSorted })
+  } catch (error) {
+    res.status(500).send({ message: JSON.stringify(error) })
+  }
+})
 
 export const addHomeSection = https.onRequest(async (req, res) => {
   const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])

@@ -43,15 +43,14 @@ export const checkAuthenticationAndAuthorization = async (req: CloudEndpointArgs
 
     const user = await admin.firestore().collection(GlobalCollections.USERS).doc(uid).get()
 
-    if (allowedRoles) {
-      if (!allowedRoles.includes(user.data()?.role)) {
-        res.status(403).send({ message: "Unauthorized" })
+    if (allowedRoles && !allowedRoles.includes(user.data()?.role)) {
+      res.status(403).send({ message: "Unauthorized" })
 
-        return notAuthorizedResponse
-      }
+      return notAuthorizedResponse
     }
 
     return { isAuthorized: true, isAuthenticated: true, user }
+
   } catch (error) {
     res.status(401).send({ message: "Unauthenticated" })
 
