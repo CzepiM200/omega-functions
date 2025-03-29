@@ -1,6 +1,7 @@
 import * as https from "firebase-functions/v2/https"
 import * as admin from "firebase-admin"
 import { GlobalCollections } from "../consts/collection"
+import { Roles } from "../consts/roles"
 
 type CloudEndpointType = typeof https.onRequest
 type CloudEndpointArgsType = Parameters<Parameters<CloudEndpointType>[0]>
@@ -25,7 +26,7 @@ type CloudEndpointArgsType = Parameters<Parameters<CloudEndpointType>[0]>
 const notAuthenticatedResponse = { isAuthorized: false, isAuthenticated: false, user: undefined }
 const notAuthorizedResponse = { isAuthorized: true, isAuthenticated: false, user: undefined }
 
-export const checkAuthenticationAndAuthorization = async (req: CloudEndpointArgsType[0], res: CloudEndpointArgsType[1], allowedRoles?: Array<string>) => {
+export const checkAuthenticationAndAuthorization = async (req: CloudEndpointArgsType[0], res: CloudEndpointArgsType[1], allowedRoles?: Array<Roles>) => {
   const token = req.headers.authorization
 
   if (!token || !token.startsWith("Bearer ")) {

@@ -7,6 +7,10 @@ export enum GlobalCollections {
   FAQ = "faq",
 }
 
+export enum UserCollections {
+  AVAILABILITY = "availability",
+}
+
 export enum OrderCollections {
   FAQ = "faq",
   HOME_PAGE = "home-page",
