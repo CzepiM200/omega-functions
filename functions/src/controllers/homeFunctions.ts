@@ -1,10 +1,10 @@
 import * as https from "firebase-functions/v2/https"
-import { setGlobalOptions } from "firebase-functions"
-import { checkAuthenticationAndAuthorization } from "./utils/authMiddleware"
+import { checkAuthenticationAndAuthorization } from "../utils/authMiddleware"
 import * as admin from "firebase-admin"
-import { addNewIdToOrderItem, deleteIdToOrderItem } from "./utils/orderModifiers"
-import { GlobalCollections, OrderCollections } from "./consts/collection"
-import { Roles } from "./consts/roles"
+import { addNewIdToOrderItem, deleteIdToOrderItem } from "../utils/orderModifiers"
+import { GlobalCollections, OrderCollectionIds } from "../consts/collection"
+import { Roles } from "../consts/roles"
+import { setGlobalOptions } from "firebase-functions/v2"
 
 setGlobalOptions({ region: "europe-central2" })
 
@@ -26,7 +26,7 @@ export const addHomeSection = https.onRequest(async (req, res) => {
       ...body.data,
     })
 
-    await addNewIdToOrderItem(OrderCollections.HOME_PAGE, newHomeSection.id)
+    await addNewIdToOrderItem(OrderCollectionIds.HOME_PAGE, newHomeSection.id)
 
     res.status(201).send({ id: newHomeSection.id })
   } catch (error) {
@@ -72,7 +72,7 @@ export const deleteHomeSection = https.onRequest(async (req, res) => {
 
   try {
     await admin.firestore().collection(GlobalCollections.HOME_SECTION).doc(body.id).delete()
-    await deleteIdToOrderItem(OrderCollections.HOME_PAGE, body.id)
+    await deleteIdToOrderItem(OrderCollectionIds.HOME_PAGE, body.id)
 
     res.status(200).send({ message: "SUCCESS" })
   } catch (error) {

@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin"
-import { GlobalCollections, OrderCollections } from "../consts/collection"
+import { GlobalCollections, OrderCollectionIds } from "../consts/collection"
 
-export const addNewIdToOrderItem = async (orderItemName: OrderCollections, newId: string) => {
+export const addNewIdToOrderItem = async (orderItemName: OrderCollectionIds, newId: string) => {
   const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
   const orderItemReference = collectionReference.doc(orderItemName)
   const orderItem = await orderItemReference.get()
@@ -14,7 +14,7 @@ export const addNewIdToOrderItem = async (orderItemName: OrderCollections, newId
   return
 }
 
-export const deleteIdToOrderItem = async (orderItemName: OrderCollections, deleteId: string) => {
+export const deleteIdToOrderItem = async (orderItemName: OrderCollectionIds, deleteId: string) => {
   const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
   const orderItemReference = collectionReference.doc(orderItemName)
   const orderItem = await orderItemReference.get()
@@ -25,4 +25,76 @@ export const deleteIdToOrderItem = async (orderItemName: OrderCollections, delet
   await orderItemReference.set({ order: newOrder })
 
   return
+}
+
+export const moveIdUpInOrder = async (orderItemName: OrderCollectionIds, itemId: string) => {
+  const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
+  const orderItemReference = collectionReference.doc(orderItemName)
+  const orderItem = await orderItemReference.get()
+
+  const { order } = orderItem.data() as { order: Array<string> }
+
+  const newOrder = moveIdUp(itemId, order)
+
+  await orderItemReference.set({ order: newOrder })
+
+  return
+}
+
+const moveIdUp = (id: string, order?: Array<string>) => {
+  if (order) {
+    const itemIndex = order.indexOf(id)
+
+    if (itemIndex > 0) {
+      return order.map((itemId, idx) => {
+        if (idx === itemIndex) {
+          return order.at(itemIndex - 1) as string
+        }
+
+        if (idx === itemIndex - 1) {
+          return order.at(itemIndex) as string
+        }
+
+        return itemId
+      })
+    }
+  }
+
+  return order
+}
+
+export const moveIdDownInOrder = async (orderItemName: OrderCollectionIds, itemId: string) => {
+  const collectionReference = admin.firestore().collection(GlobalCollections.COLLECTIONS_ORDER)
+  const orderItemReference = collectionReference.doc(orderItemName)
+  const orderItem = await orderItemReference.get()
+
+  const { order } = orderItem.data() as { order: Array<string> }
+
+  const newOrder = moveIdDown(itemId, order)
+
+  await orderItemReference.set({ order: newOrder })
+
+  return
+}
+
+const moveIdDown = (id: string, order?: Array<string>) => {
+  if (order) {
+    const itemIndex = order.indexOf(id)
+
+    if (itemIndex < order.length - 1) {
+      return order.map((itemId, idx) => {
+        if (idx === itemIndex) {
+          return order.at(itemIndex + 1) as string
+        }
+
+        if (idx === itemIndex + 1) {
+          return order.at(itemIndex) as string
+        }
+
+        return itemId
+      })
+    }
+  }
+
+  return order
 }

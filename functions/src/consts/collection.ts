@@ -11,7 +11,7 @@ export enum UserCollections {
   AVAILABILITY = "availability",
 }
 
-export enum OrderCollections {
+export enum OrderCollectionIds {
   FAQ = "faq",
   HOME_PAGE = "home-page",
 }

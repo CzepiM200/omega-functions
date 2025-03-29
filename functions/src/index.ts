@@ -1,9 +1,8 @@
 import * as auth from "firebase-functions/v1/auth"
 import * as admin from "firebase-admin"
-import * as homeFunctions from "./homeFunctions"
-import { setGlobalOptions } from "firebase-functions/v2"
+import * as homeFunctions from "./controllers/homeFunctions"
+import * as orderFunctions from "./controllers/orderFunctions"
 
-setGlobalOptions({ region: "europe-central2" })
 admin.initializeApp()
 
 export const setUserRoleOnSignup = auth.user().onCreate(async (user) => {
@@ -22,4 +21,4 @@ export const setUserRoleOnSignup = auth.user().onCreate(async (user) => {
   })
 })
 
-export { homeFunctions }
+export { homeFunctions, orderFunctions }
