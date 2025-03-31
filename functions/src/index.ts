@@ -2,6 +2,7 @@ import * as auth from "firebase-functions/v1/auth"
 import * as admin from "firebase-admin"
 import * as homeFunctions from "./controllers/homeFunctions"
 import * as orderFunctions from "./controllers/orderFunctions"
+import * as productSectionsFunctions from "./controllers/productSectionsFunctions"
 
 admin.initializeApp()
 
@@ -21,4 +22,4 @@ export const setUserRoleOnSignup = auth.user().onCreate(async (user) => {
   })
 })
 
-export { homeFunctions, orderFunctions }
+export { homeFunctions, orderFunctions, productSectionsFunctions }

@@ -3,7 +3,8 @@ export enum GlobalCollections {
   COLLECTIONS_ORDER = "collections-order",
   HOME_SECTION = "home-sections",
   EVENTS = "events",
-  MENU_ITEMS = "menu-items",
+  PRODUCTS = "products",
+  PRODUCT_SECTIONS = "product-sections",
   FAQ = "faq",
 }
 
@@ -14,4 +15,5 @@ export enum UserCollections {
 export enum OrderCollectionIds {
   FAQ = "faq",
   HOME_PAGE = "home-page",
+  PRODUCT_PAGE = "product-page",
 }
