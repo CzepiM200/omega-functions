@@ -30,6 +30,30 @@ export const getProductSections = https.onRequest(async (req, res) => {
   }
 })
 
+export const getProductSectionDetails = https.onRequest(async (req, res) => {
+  const {
+    isAuthenticated,
+    isAuthorized,
+  } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN, Roles.MODERATOR, Roles.USER])
+
+  if (!isAuthenticated || !isAuthorized) {
+    return
+  }
+
+  try {
+    const productSnapshot = admin.firestore().collection(GlobalCollections.PRODUCT_SECTIONS).doc(req.body.id)
+    const productData = await productSnapshot.get()
+
+    if (!productData) {
+      res.status(404).send({ message: "Product not found" })
+    }
+
+    res.status(200).send({ id: productSnapshot.id, ...productData.data() })
+  } catch (error) {
+    res.status(500).send({ message: JSON.stringify(error) })
+  }
+})
+
 export const addProductSection = https.onRequest(async (req, res) => {
   const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
 
@@ -72,7 +96,7 @@ export const deleteProductSection = https.onRequest(async (req, res) => {
   if (!isAuthenticated || !isAuthorized) {
     return
   }
-  
+
   try {
     await admin.firestore().collection(GlobalCollections.PRODUCT_SECTIONS).doc(req.body.id).delete()
     await deleteIdToOrderItem(OrderCollectionIds.PRODUCT_PAGE, req.body.id)
