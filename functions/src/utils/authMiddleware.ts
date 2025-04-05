@@ -1,59 +1,52 @@
 import * as https from "firebase-functions/v2/https"
 import * as admin from "firebase-admin"
+import * as express from "express"
 import { GlobalCollections } from "../consts/collection"
 import { Roles } from "../consts/roles"
 
-type CloudEndpointType = typeof https.onRequest
-type CloudEndpointArgsType = Parameters<Parameters<CloudEndpointType>[0]>
-// type HandleType = (typeof https.onRequest)
-//
-// export const authMiddleware =
-//     (handler: HandleType, {authenticatedRoute = true} = {}) =>
-//         (req: CloudEndpointArgsType[0], res: CloudEndpointArgsType[1]) => {
-//             if (authenticatedRoute) {
-//                 const isAuthorized = isAuthenticated(req)
-//
-//                 if (!isAuthorized) {
-//                     res.status(401).send({message: 'Unauthorized'})
-//                     return
-//                 }
-//             }
-//             // return cors(req, res, () => {
-//             return handler(req, res)
-//             // })
-//         }
+type CloudFunctionRequest = https.Request
+type CloudFunctionResponse = express.Response
+type UserData = admin.firestore.DocumentData
 
-const notAuthenticatedResponse = { isAuthorized: false, isAuthenticated: false, user: undefined }
-const notAuthorizedResponse = { isAuthorized: true, isAuthenticated: false, user: undefined }
+export const authMiddleware =
+  (handler: (req: CloudFunctionRequest, res: CloudFunctionResponse, user: UserData) => Promise<void>, allowedRoles?: Array<Roles>) =>
+    async (req: CloudFunctionRequest, res: CloudFunctionResponse): Promise<void> => {
+      const token = req.headers.authorization
 
-export const checkAuthenticationAndAuthorization = async (req: CloudEndpointArgsType[0], res: CloudEndpointArgsType[1], allowedRoles?: Array<Roles>) => {
-  const token = req.headers.authorization
+      if (!token || !token.startsWith("Bearer ")) {
+        res.status(401).send({ message: "Unauthenticated" })
 
-  if (!token || !token.startsWith("Bearer ")) {
-    res.status(401).send({ message: "Unauthenticated" })
+        return
+      }
 
-    return notAuthenticatedResponse
-  }
+      const idToken = token.split("Bearer ")[1]
 
-  const idToken = token.split("Bearer ")[1]
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken)
+        const uid = decodedToken.uid
 
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken)
-    const uid = decodedToken.uid
+        const userReference = await admin.firestore().collection(GlobalCollections.USERS).doc(uid).get()
+        const userData = userReference.data()
 
-    const user = await admin.firestore().collection(GlobalCollections.USERS).doc(uid).get()
+        if (allowedRoles && !allowedRoles.includes(userData?.role)) {
+          res.status(403).send({ message: "Unauthorized" })
 
-    if (allowedRoles && !allowedRoles.includes(user.data()?.role)) {
-      res.status(403).send({ message: "Unauthorized" })
+          return
+        }
 
-      return notAuthorizedResponse
+        if (!userData) {
+          res.status(404).send({ message: "User not found" })
+
+          return
+        }
+
+        await handler(req, res, userData)
+      } catch (error) {
+        res.status(401).send({ message: "Unauthenticated" })
+
+        return
+      }
+
+      return
     }
-
-    return { isAuthorized: true, isAuthenticated: true, user }
-
-  } catch (error) {
-    res.status(401).send({ message: "Unauthenticated" })
-
-    return notAuthenticatedResponse
-  }
-}
+    

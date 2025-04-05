@@ -1,5 +1,5 @@
 import * as https from "firebase-functions/v2/https"
-import { checkAuthenticationAndAuthorization } from "../utils/authMiddleware"
+import { authMiddleware } from "../utils/authMiddleware"
 import * as admin from "firebase-admin"
 import { addNewIdToOrderItem, deleteIdToOrderItem } from "../utils/orderModifiers"
 import { GlobalCollections, OrderCollectionIds } from "../consts/collection"
@@ -9,16 +9,7 @@ import { getSortedListByOrderList } from "../utils/orderList"
 
 setGlobalOptions({ region: "europe-central2" })
 
-export const getProductSections = https.onRequest(async (req, res) => {
-  const {
-    isAuthenticated,
-    isAuthorized,
-  } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN, Roles.MODERATOR, Roles.USER])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const getProductSections = https.onRequest(authMiddleware(async (req, res) => {
   try {
     const collectionSnapshot = await admin.firestore().collection(GlobalCollections.PRODUCT_SECTIONS).get()
     const productSectionsData = collectionSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
@@ -28,39 +19,24 @@ export const getProductSections = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}))
 
-export const getProductSectionDetails = https.onRequest(async (req, res) => {
-  const {
-    isAuthenticated,
-    isAuthorized,
-  } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN, Roles.MODERATOR, Roles.USER])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const getProductSectionDetails = https.onRequest(authMiddleware(async (req, res) => {
   try {
     const productSnapshot = admin.firestore().collection(GlobalCollections.PRODUCT_SECTIONS).doc(req.body.id)
-    const productData = await productSnapshot.get()
+    const product = await productSnapshot.get()
 
-    if (!productData) {
+    if (!product) {
       res.status(404).send({ message: "Product not found" })
     }
 
-    res.status(200).send({ id: productSnapshot.id, ...productData.data() })
+    res.status(200).send({ id: product.id, ...product.data() })
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}))
 
-export const addProductSection = https.onRequest(async (req, res) => {
-  const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const addProductSection = https.onRequest(authMiddleware(async (req, res) => {
   try {
     const newProductSection = await admin.firestore().collection(GlobalCollections.PRODUCT_SECTIONS).add(req.body)
 
@@ -70,15 +46,9 @@ export const addProductSection = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}, [Roles.ADMIN]))
 
-export const editProductSection = https.onRequest(async (req, res) => {
-  const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const editProductSection = https.onRequest(authMiddleware(async (req, res) => {
   const { id, ...data } = req.body
 
   try {
@@ -88,15 +58,9 @@ export const editProductSection = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}, [Roles.ADMIN]))
 
-export const deleteProductSection = https.onRequest(async (req, res) => {
-  const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const deleteProductSection = https.onRequest(authMiddleware(async (req, res) => {
   try {
     await admin.firestore().collection(GlobalCollections.PRODUCT_SECTIONS).doc(req.body.id).delete()
     await deleteIdToOrderItem(OrderCollectionIds.PRODUCT_PAGE, req.body.id)
@@ -105,4 +69,4 @@ export const deleteProductSection = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}, [Roles.ADMIN]))

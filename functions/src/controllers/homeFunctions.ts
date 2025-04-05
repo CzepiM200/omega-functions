@@ -1,5 +1,5 @@
 import * as https from "firebase-functions/v2/https"
-import { checkAuthenticationAndAuthorization } from "../utils/authMiddleware"
+import { authMiddleware } from "../utils/authMiddleware"
 import * as admin from "firebase-admin"
 import { addNewIdToOrderItem, deleteIdToOrderItem } from "../utils/orderModifiers"
 import { GlobalCollections, OrderCollectionIds } from "../consts/collection"
@@ -9,19 +9,10 @@ import { getSortedListByOrderList } from "../utils/orderList"
 
 setGlobalOptions({ region: "europe-central2" })
 
-export const getHomeSections = https.onRequest(async (req, res) => {
-  const {
-    isAuthenticated,
-    isAuthorized,
-  } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN, Roles.MODERATOR, Roles.USER])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const getHomeSections = https.onRequest(authMiddleware(async (req, res) => {
   try {
-    const homeSectionsSnapshot = await admin.firestore().collection(GlobalCollections.HOME_SECTION).get()
-    const homeSectionsData = homeSectionsSnapshot.docs.map(doc => {
+    const homeSectionsReference = await admin.firestore().collection(GlobalCollections.HOME_SECTION).get()
+    const homeSectionsData = homeSectionsReference.docs.map(doc => {
       const { type, ...data } = doc.data()
 
       return ({ id: doc.id, type, data })
@@ -32,15 +23,26 @@ export const getHomeSections = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}))
 
-export const addHomeSection = https.onRequest(async (req, res) => {
-  const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
+export const getHomeSectionDetails = https.onRequest(authMiddleware(async (req, res) => {
+  try {
+    const homeSectionReference = admin.firestore().collection(GlobalCollections.HOME_SECTION).doc(req.body.id)
+    const homeSection = await homeSectionReference.get()
 
-  if (!isAuthenticated || !isAuthorized) {
-    return
+    if (!homeSection) {
+      res.status(404).send({ message: "Section not found" })
+    }
+
+    const { type, ...data } = homeSection.data() as Record<string, unknown>
+
+    res.status(200).send({ id: homeSection.id, type, data })
+  } catch (error) {
+    res.status(500).send({ message: JSON.stringify(error) })
   }
+}, [Roles.ADMIN]))
 
+export const addHomeSection = https.onRequest(authMiddleware(async (req, res) => {
   const body = req.body as {
     type: string
     data: object
@@ -58,15 +60,9 @@ export const addHomeSection = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}, [Roles.ADMIN]))
 
-export const editHomeSection = https.onRequest(async (req, res) => {
-  const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const editHomeSection = https.onRequest(authMiddleware(async (req, res) => {
   const body = req.body as {
     id: string
     type: string
@@ -83,15 +79,9 @@ export const editHomeSection = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}, [Roles.ADMIN]))
 
-export const deleteHomeSection = https.onRequest(async (req, res) => {
-  const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const deleteHomeSection = https.onRequest(authMiddleware(async (req, res) => {
   const body = req.body as {
     id: string
   }
@@ -104,4 +94,4 @@ export const deleteHomeSection = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}, [Roles.ADMIN]))

@@ -1,5 +1,5 @@
 import * as https from "firebase-functions/v2/https"
-import { checkAuthenticationAndAuthorization } from "../utils/authMiddleware"
+import { authMiddleware } from "../utils/authMiddleware"
 import { moveIdDownInOrder, moveIdUpInOrder } from "../utils/orderModifiers"
 import { OrderCollectionIds } from "../consts/collection"
 import { Roles } from "../consts/roles"
@@ -7,13 +7,7 @@ import { setGlobalOptions } from "firebase-functions/v2"
 
 setGlobalOptions({ region: "europe-central2" })
 
-export const moveItemInOrder = https.onRequest(async (req, res) => {
-  const { isAuthenticated, isAuthorized } = await checkAuthenticationAndAuthorization(req, res, [Roles.ADMIN])
-
-  if (!isAuthenticated || !isAuthorized) {
-    return
-  }
-
+export const moveItemInOrder = https.onRequest(authMiddleware(async (req, res) => {
   const body = req.body as {
     direction: "up" | "down"
     orderId: OrderCollectionIds
@@ -32,4 +26,4 @@ export const moveItemInOrder = https.onRequest(async (req, res) => {
   } catch (error) {
     res.status(500).send({ message: JSON.stringify(error) })
   }
-})
+}, [Roles.ADMIN]))
